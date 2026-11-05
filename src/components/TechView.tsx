@@ -45,7 +45,7 @@ function TechCard({ data }: NodeProps<Node<TechData>>) {
 }
 
 const nodeTypes = { tech: TechCard, phase: PhaseGroup };
-const LAYOUT = { layerSpacing: 110, nodeSpacing: 40, direction: "DOWN" as const };
+const LAYOUT = { layerSpacing: 70, nodeSpacing: 60, direction: "DOWN" as const };
 
 function buildGraph(): { nodes: Node[]; edges: Edge[] } {
   const used = layers.filter((l) => archNodes.some((n) => n.layer === l));
@@ -72,11 +72,8 @@ function buildGraph(): { nodes: Node[]; edges: Edge[] } {
       source: e.from,
       target: e.to,
       label: e.label,
-      type: "smoothstep",
       style: { stroke: k.color, strokeWidth: 2, strokeDasharray: k.dashed ? "6 4" : undefined },
-      labelStyle: { fontSize: 11, fill: k.color, fontWeight: 600 },
-      labelBgPadding: [4, 2],
-      labelBgBorderRadius: 4,
+      labelStyle: { fontSize: 12, color: k.color, fontWeight: 600 },
       markerEnd: { type: MarkerType.ArrowClosed, color: k.color },
     };
   });

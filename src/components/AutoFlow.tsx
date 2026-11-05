@@ -15,7 +15,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./roadmap.css";
-import { layoutNodes, type LayoutOptions } from "../lib/layout";
+import { layoutGraph, type LayoutOptions } from "../lib/layout";
+import RoutedEdge from "./RoutedEdge";
+
+const edgeTypes = { routed: RoutedEdge };
 
 interface Props {
   nodes: Node[];
@@ -29,7 +32,7 @@ interface Props {
 
 function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, minimapColor, minimap = true, children }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const measured = useNodesInitialized();
   const { fitView } = useReactFlow();
   const [ready, setReady] = useState(false);
@@ -40,12 +43,15 @@ function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, mi
   useEffect(() => {
     if (!measured || started.current) return;
     started.current = true;
-    layoutNodes(nodes, edges, layout).then((laidOut) => {
-      setNodes(laidOut);
+    layoutGraph(nodes, edges, layout).then((laidOut) => {
+      setNodes(laidOut.nodes);
+      setEdges(laidOut.edges);
       setReady(true);
-      requestAnimationFrame(() => fitView({ padding: 0.1 }));
+      // Erst nach dem nächsten Render einpassen, wenn React Flow die neuen
+      // Positionen und Gruppengrößen kennt.
+      setTimeout(() => fitView({ padding: 0.1 }), 80);
     });
-  }, [measured, nodes, edges, layout, setNodes, fitView]);
+  }, [measured, nodes, edges, layout, setNodes, setEdges, fitView]);
 
   return (
     <div className="flow-wrap" style={{ visibility: ready ? "visible" : "hidden" }}>
@@ -53,6 +59,7 @@ function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, mi
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodesDraggable={false}

@@ -95,3 +95,12 @@ body { background: var(--bg); color: var(--text); }
 .pipe-step dt { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 8px; }
 .pipe-step dd { margin: 2px 0 0; }
 .pipe-branch { margin-top: 12px; font-size: 13px; padding: 6px 10px; border-radius: 8px; background: rgba(217,119,6,.12); color: var(--text); border: 1px dashed #d97706; }
+
+/* Technik-Karten: mehr Luft innen */
+.card.tech .card-link { padding: 16px 18px 18px; }
+.card.tech .card-head { margin-bottom: 2px; }
+.card.tech .tech-tag { margin: 6px 0 4px; line-height: 1.4; }
+.card.tech .card-desc { margin-top: 10px; line-height: 1.55; }
+.card.tech { width: 320px; }
+
+.edge-label { position: absolute; pointer-events: none; padding: 3px 8px; border-radius: 6px; background: var(--bg); white-space: nowrap; line-height: 1.2; }
