@@ -5,6 +5,14 @@
 
 export type Status = "offen" | "in Arbeit" | "erledigt";
 export type Phase = "MVP" | "nach MVP";
+/** Themenstrang: bestimmt die Zeile in der Roadmap-Ansicht */
+export type Lane =
+  | "Quellen & Daten"
+  | "Backend & Website"
+  | "Wachstum"
+  | "Nutzerbindung"
+  | "Erlös"
+  | "Erweiterung";
 
 /**
  * Wird später von einer GitHub Action (stündlich, Todoist-API, Token als
@@ -29,7 +37,10 @@ export interface RoadmapNode {
   phase: Phase;
   /** ids der Knoten, von denen dieser Knoten abhängt (erzeugt Kanten) */
   dependsOn: string[];
-  /** Notion- oder Todoist-Link; öffnet beim Klick auf die Karte */
+  lane: Lane;
+  /** Abschnitt der Notion-Seite (siehe notion.ts); daraus entsteht der Link */
+  section?: SectionKey;
+  /** Expliziter Link (z. B. Todoist), überschreibt `section` */
   link?: string;
   /** Vorbereitet: Todoist-Projekt-ID für den späteren Fortschritts-Sync */
   todoistProjectId?: string;
@@ -37,10 +48,20 @@ export interface RoadmapNode {
   todoist?: TodoistProgress;
 }
 
-export const phases: Phase[] = ["MVP", "nach MVP"];
+import { notionUrl, type SectionKey } from "./notion";
 
-const NOTION =
-  "https://app.notion.com/p/40de8923052e8149b1f3e641678ed9d1";
+export const phases: Phase[] = ["MVP", "nach MVP"];
+export const lanes: Lane[] = [
+  "Quellen & Daten",
+  "Backend & Website",
+  "Wachstum",
+  "Nutzerbindung",
+  "Erlös",
+  "Erweiterung",
+];
+
+/** Link, der beim Klick auf die Karte geöffnet wird */
+export const itemLink = (n: RoadmapNode) => n.link ?? notionUrl(n.section);
 
 export const roadmap: RoadmapNode[] = [
   // ───────────── MVP ─────────────
@@ -52,7 +73,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: [],
-    link: NOTION,
+    lane: "Quellen & Daten",
+    section: "quellen",
   },
   {
     id: "crawler",
@@ -62,7 +84,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["quellen"],
-    link: NOTION,
+    lane: "Quellen & Daten",
+    section: "architektur",
   },
   {
     id: "hash",
@@ -72,7 +95,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["crawler"],
-    link: NOTION,
+    lane: "Quellen & Daten",
+    section: "architektur",
   },
   {
     id: "db",
@@ -82,7 +106,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: [],
-    link: NOTION,
+    lane: "Backend & Website",
+    section: "techstack",
   },
   {
     id: "extraktion",
@@ -92,7 +117,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["hash", "db"],
-    link: NOTION,
+    lane: "Quellen & Daten",
+    section: "ki",
   },
   {
     id: "edge",
@@ -102,7 +128,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["db"],
-    link: NOTION,
+    lane: "Backend & Website",
+    section: "hosting",
   },
   {
     id: "frontend",
@@ -112,7 +139,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["edge", "extraktion"],
-    link: NOTION,
+    lane: "Backend & Website",
+    section: "mvp",
   },
   {
     id: "nutzer",
@@ -122,7 +150,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["frontend"],
-    link: NOTION,
+    lane: "Wachstum",
+    section: "nutzergewinnung",
   },
   {
     id: "analytics",
@@ -132,7 +161,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "MVP",
     dependsOn: ["frontend"],
-    link: NOTION,
+    lane: "Wachstum",
+    section: "nutzergewinnung",
   },
 
   // ───────────── nach MVP ─────────────
@@ -144,7 +174,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["analytics"],
-    link: NOTION,
+    lane: "Nutzerbindung",
+    section: "nachMvp",
   },
   {
     id: "newsletter",
@@ -154,7 +185,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["mail"],
-    link: NOTION,
+    lane: "Nutzerbindung",
+    section: "nachMvp",
   },
   {
     id: "ics",
@@ -164,7 +196,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["frontend"],
-    link: NOTION,
+    lane: "Nutzerbindung",
+    section: "nachMvp",
   },
   {
     id: "erloes-featured",
@@ -174,7 +207,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["analytics"],
-    link: NOTION,
+    lane: "Erlös",
+    section: "monetarisierung",
   },
   {
     id: "erloes-sponsoring",
@@ -184,7 +218,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["erloes-featured", "newsletter"],
-    link: NOTION,
+    lane: "Erlös",
+    section: "monetarisierung",
   },
   {
     id: "erloes-display",
@@ -194,7 +229,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["erloes-sponsoring"],
-    link: NOTION,
+    lane: "Erlös",
+    section: "monetarisierung",
   },
   {
     id: "jugend",
@@ -204,7 +240,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["frontend"],
-    link: NOTION,
+    lane: "Erweiterung",
+    section: "nachMvp",
   },
   {
     id: "staedte",
@@ -214,7 +251,8 @@ export const roadmap: RoadmapNode[] = [
     status: "offen",
     phase: "nach MVP",
     dependsOn: ["analytics", "quellen"],
-    link: NOTION,
+    lane: "Erweiterung",
+    section: "nachMvp",
   },
 ];
 
