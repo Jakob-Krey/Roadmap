@@ -10,7 +10,19 @@ const GROUP_PADDING = { top: 56, left: 24, bottom: 24, right: 24 };
  * Knoten mit `parentId` werden innerhalb ihrer Phasen-Gruppe angeordnet;
  * die Größen der Karten kommen aus den im Browser gemessenen Werten.
  */
-export async function layoutNodes(nodes: Node[], edges: Edge[]): Promise<Node[]> {
+export interface LayoutOptions {
+  /** Abstand zwischen den Spalten (Platz für Kantenbeschriftungen) */
+  layerSpacing?: number;
+  nodeSpacing?: number;
+  /** Optional: Knoten-id → Spalte, erzwingt die Reihenfolge von links nach rechts */
+  partitions?: Record<string, number>;
+}
+
+export async function layoutNodes(
+  nodes: Node[],
+  edges: Edge[],
+  opts: LayoutOptions = {},
+): Promise<Node[]> {
   const groups = nodes.filter((n) => n.type === "phase");
   const cards = nodes.filter((n) => n.type !== "phase");
 
@@ -20,11 +32,12 @@ export async function layoutNodes(nodes: Node[], edges: Edge[]): Promise<Node[]>
       "elk.algorithm": "layered",
       "elk.direction": "RIGHT",
       "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-      "elk.spacing.nodeNode": "32",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "90",
+      "elk.spacing.nodeNode": String(opts.nodeSpacing ?? 32),
+      "elk.layered.spacing.nodeNodeBetweenLayers": String(opts.layerSpacing ?? 90),
       "elk.layered.spacing.edgeNodeBetweenLayers": "30",
       "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
       "elk.layered.crossingMinimization.semiInteractive": "true",
+      ...(opts.partitions ? { "elk.partitioning.activate": "true" } : {}),
     },
     children: groups.map((g) => ({
       id: g.id,
@@ -37,6 +50,9 @@ export async function layoutNodes(nodes: Node[], edges: Edge[]): Promise<Node[]>
           id: c.id,
           width: c.measured?.width ?? 300,
           height: c.measured?.height ?? 140,
+          ...(opts.partitions?.[c.id] !== undefined
+            ? { layoutOptions: { "elk.partitioning.partition": String(opts.partitions[c.id]) } }
+            : {}),
         })),
     })),
     edges: edges.map((e) => ({ id: e.id, sources: [e.source], targets: [e.target] })),

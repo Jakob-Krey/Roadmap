@@ -1,5 +1,5 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import type { RoadmapNode, Status } from "../data/roadmap";
+import { itemLink, type RoadmapNode, type Status } from "../data/roadmap";
 
 export type CardData = { item: RoadmapNode } & Record<string, unknown>;
 export type CardNode = Node<CardData, "card">;
@@ -30,10 +30,10 @@ export default function RoadmapCard({ data }: NodeProps<CardNode>) {
   return (
     <div className={`card ${STATUS_CLASS[item.status]}`}>
       <Handle type="target" position={Position.Left} isConnectable={false} />
-      {item.link ? (
+      {itemLink(item) ? (
         <a
           className="card-link nodrag nopan"
-          href={item.link}
+          href={itemLink(item)}
           target="_blank"
           rel="noopener noreferrer"
         >
