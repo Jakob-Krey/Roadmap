@@ -1,5 +1,5 @@
 ---
-import RoadmapFlow from "../components/RoadmapFlow";
+import App from "../components/App";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
@@ -13,7 +13,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   </head>
   <body>
     <main>
-      <RoadmapFlow client:only="react" />
+      <App client:only="react" />
     </main>
   </body>
 </html>
