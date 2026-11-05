@@ -1,0 +1,24 @@
+---
+import RoadmapFlow from "../components/RoadmapFlow";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <title>Roadmap – Familien-Angebote-Finder</title>
+  </head>
+  <body>
+    <main>
+      <RoadmapFlow client:only="react" />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  html, body, main { margin: 0; height: 100%; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+</style>
