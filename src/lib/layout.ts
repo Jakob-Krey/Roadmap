@@ -14,6 +14,7 @@ export interface LayoutOptions {
   /** Abstand zwischen den Spalten (Platz für Kantenbeschriftungen) */
   layerSpacing?: number;
   nodeSpacing?: number;
+  direction?: "RIGHT" | "DOWN";
   /** Optional: Knoten-id → Spalte, erzwingt die Reihenfolge von links nach rechts */
   partitions?: Record<string, number>;
 }
@@ -30,7 +31,7 @@ export async function layoutNodes(
     id: "root",
     layoutOptions: {
       "elk.algorithm": "layered",
-      "elk.direction": "RIGHT",
+      "elk.direction": opts.direction ?? "RIGHT",
       "elk.hierarchyHandling": "INCLUDE_CHILDREN",
       "elk.spacing.nodeNode": String(opts.nodeSpacing ?? 32),
       "elk.layered.spacing.nodeNodeBetweenLayers": String(opts.layerSpacing ?? 90),

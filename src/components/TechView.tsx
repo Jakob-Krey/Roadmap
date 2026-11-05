@@ -8,10 +8,12 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react";
-import { archEdges, archNodes, columns, details, flowKinds, layers } from "../data/architecture";
+import { archEdges, archNodes, details, flowKinds, layers, pipelineSteps } from "../data/architecture";
 import { notionUrl } from "../data/notion";
 import AutoFlow from "./AutoFlow";
 import { PhaseGroup } from "./RoadmapCard";
+import SequenceDiagram from "./SequenceDiagram";
+import { useState } from "react";
 
 type TechData = { item: (typeof archNodes)[number] } & Record<string, unknown>;
 
@@ -19,7 +21,7 @@ function TechCard({ data }: NodeProps<Node<TechData>>) {
   const { item } = data;
   return (
     <div className={`card tech ${item.phase === "nach MVP" ? "later" : ""}`}>
-      <Handle type="target" position={Position.Left} isConnectable={false} />
+      <Handle type="target" position={Position.Top} isConnectable={false} />
       <a
         className="card-link nodrag nopan"
         href={notionUrl(item.section)}
@@ -30,16 +32,20 @@ function TechCard({ data }: NodeProps<Node<TechData>>) {
           <span className="card-title">{item.title}</span>
           {item.phase === "nach MVP" && <span className="badge">nach MVP</span>}
         </div>
-        <div className="tech-tag">{item.tech}</div>
+        <div className="tech-tag">
+          [{item.kind}
+          {item.kind === "Container" ? `: ${item.tech}` : ""}]
+        </div>
+        {item.kind !== "Container" && <div className="tech-sub">{item.tech}</div>}
         <p className="card-desc">{item.description}</p>
       </a>
-      <Handle type="source" position={Position.Right} isConnectable={false} />
+      <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>
   );
 }
 
 const nodeTypes = { tech: TechCard, phase: PhaseGroup };
-const LAYOUT = { layerSpacing: 150, nodeSpacing: 28, partitions: columns };
+const LAYOUT = { layerSpacing: 110, nodeSpacing: 40, direction: "DOWN" as const };
 
 function buildGraph(): { nodes: Node[]; edges: Edge[] } {
   const used = layers.filter((l) => archNodes.some((n) => n.layer === l));
@@ -77,27 +83,78 @@ function buildGraph(): { nodes: Node[]; edges: Edge[] } {
   return { nodes: [...groups, ...cards], edges };
 }
 
+const VIEWS = [
+  { id: "system", label: "Systemüberblick", hint: "C4-Containerdiagramm: wer redet mit wem" },
+  { id: "suche", label: "Ablauf: Suche", hint: "Sequenzdiagramm: was passiert bei einer Suchanfrage" },
+  { id: "pipeline", label: "Ablauf: Pipeline", hint: "Datenfluss: wie die Angebote nachts in die DB kommen" },
+] as const;
+
+function Pipeline() {
+  return (
+    <ol className="pipe">
+      {pipelineSteps.map((s, i) => (
+        <li key={s.title} className="pipe-step">
+          <div className="pipe-n">{i + 1}</div>
+          <h4>{s.title}</h4>
+          <div className="tech-tag">{s.tech}</div>
+          <dl>
+            <dt>Eingabe</dt>
+            <dd>{s.input}</dd>
+            <dt>Ergebnis</dt>
+            <dd>{s.output}</dd>
+          </dl>
+          {s.branch && <div className="pipe-branch">{s.branch}</div>}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function TechView() {
   const graph = useMemo(buildGraph, []);
+  const [view, setView] = useState<(typeof VIEWS)[number]["id"]>("system");
+  const current = VIEWS.find((v) => v.id === view)!;
   return (
     <div className="tech-page">
-      <section className="tech-diagram">
-        <AutoFlow
-          nodes={graph.nodes}
-          edges={graph.edges}
-          nodeTypes={nodeTypes}
-          layout={LAYOUT}
-          minimapColor={(n) => (n.type === "tech" ? "#6366f1" : "transparent")}
-        >
-          <Panel position="top-left" className="legend">
-            {(Object.keys(flowKinds) as (keyof typeof flowKinds)[]).map((k) => (
-              <i key={k} className={flowKinds[k].dashed ? "dashed" : ""} style={{ ["--c" as string]: flowKinds[k].color }}>
-                {flowKinds[k].label}
-              </i>
-            ))}
-          </Panel>
-        </AutoFlow>
-      </section>
+      <div className="subtabs">
+        {VIEWS.map((v) => (
+          <button key={v.id} className={v.id === view ? "on" : ""} onClick={() => setView(v.id)}>
+            {v.label}
+          </button>
+        ))}
+        <span className="subhint">{current.hint}</span>
+      </div>
+
+      {view === "system" && (
+        <section className="tech-diagram">
+          <AutoFlow
+            nodes={graph.nodes}
+            edges={graph.edges}
+            nodeTypes={nodeTypes}
+            layout={LAYOUT}
+            minimap={false}
+            minimapColor={(n) => (n.type === "tech" ? "#6366f1" : "transparent")}
+          >
+            <Panel position="top-left" className="legend">
+              {(Object.keys(flowKinds) as (keyof typeof flowKinds)[]).filter((k) => archEdges.some((e) => e.kind === k)).map((k) => (
+                <i key={k} className={flowKinds[k].dashed ? "dashed" : ""} style={{ ["--c" as string]: flowKinds[k].color }}>
+                  {flowKinds[k].label}
+                </i>
+              ))}
+            </Panel>
+          </AutoFlow>
+        </section>
+      )}
+      {view === "suche" && (
+        <section className="tech-plain">
+          <SequenceDiagram />
+        </section>
+      )}
+      {view === "pipeline" && (
+        <section className="tech-plain">
+          <Pipeline />
+        </section>
+      )}
 
       <section className="details">
         {details.map((d) => (

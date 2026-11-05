@@ -23,10 +23,11 @@ interface Props {
   nodeTypes: NodeTypes;
   layout?: LayoutOptions;
   minimapColor?: (n: Node) => string;
+  minimap?: boolean;
   children?: ReactNode;
 }
 
-function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, minimapColor, children }: Props) {
+function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, minimapColor, minimap = true, children }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
   const measured = useNodesInitialized();
@@ -64,7 +65,7 @@ function Inner({ nodes: initialNodes, edges: initialEdges, nodeTypes, layout, mi
       >
         <Background />
         <Controls showInteractive={false} />
-        <MiniMap pannable zoomable nodeColor={minimapColor} />
+        {minimap && <MiniMap pannable zoomable nodeColor={minimapColor} />}
         {children}
       </ReactFlow>
     </div>

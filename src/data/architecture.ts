@@ -9,6 +9,8 @@ import type { SectionKey } from "./notion";
 export interface ArchNode {
   id: string;
   layer: string;
+  /** C4-Typ */
+  kind: "Person" | "Externes System" | "Container";
   title: string;
   /** Technologie in Kurzform, wird als Badge gezeigt */
   tech: string;
@@ -27,127 +29,20 @@ export interface ArchEdge {
 }
 
 export const flowKinds: Record<FlowKind, { label: string; color: string; dashed?: boolean }> = {
-  nightly: { label: "Nächtliche Datenpipeline", color: "#6366f1" },
-  request: { label: "Suchanfrage einer Mutter/eines Vaters", color: "#0d9488" },
+  nightly: { label: "Nächtliche Pipeline", color: "#6366f1" },
+  request: { label: "Suchanfrage der Eltern", color: "#0d9488" },
   build: { label: "Build & Deployment", color: "#64748b", dashed: true },
   later: { label: "Nach dem MVP", color: "#d97706", dashed: true },
 };
 
 /** Reihenfolge = Reihenfolge der Gruppen im Diagramm */
-export const layers = [
-  "Quellen",
-  "GitHub Actions (nachts)",
-  "KI-Anbieter",
-  "Supabase (Frankfurt)",
-  "Website",
-  "Nutzer",
-  "Mail (nach MVP)",
-];
+export const layers = ["Personen", "Familien-Angebote-Finder (System)", "Externe Systeme"];
 
 export const archNodes: ArchNode[] = [
   {
-    id: "src",
-    layer: "Quellen",
-    title: "Geprüfte Quellen",
-    tech: "Websites · PDFs",
-    description:
-      "Nur manuell geprüfte Seiten von Vereinen, Kommunen und Trägern (robots.txt und Nutzungsbedingungen vorab geprüft).",
-    phase: "MVP",
-    section: "quellen",
-  },
-  {
-    id: "crawl",
-    layer: "GitHub Actions (nachts)",
-    title: "Crawler",
-    tech: "Python · Crawl4AI",
-    description:
-      "Läuft nächtlich per Cronjob und wandelt Seiten in sauberen Text um. PDFs: zuerst Text extrahieren.",
-    phase: "MVP",
-    section: "architektur",
-  },
-  {
-    id: "hash",
-    layer: "GitHub Actions (nachts)",
-    title: "Änderungsprüfung",
-    tech: "Hash pro Seite",
-    description:
-      "Der Hash jeder Seite wird gespeichert. Ohne Änderung gibt es keinen KI-Aufruf, das spart Kosten.",
-    phase: "MVP",
-    section: "architektur",
-  },
-  {
-    id: "extract",
-    layer: "GitHub Actions (nachts)",
-    title: "KI-Extraktion",
-    tech: "Structured Output",
-    description:
-      "Macht aus dem Text neuer oder geänderter Seiten Datensätze nach Schema. Feste Selektoren pro Seite sind nicht nötig.",
-    phase: "MVP",
-    section: "ki",
-  },
-  {
-    id: "deploy",
-    layer: "GitHub Actions (nachts)",
-    title: "Build & Deploy",
-    tech: "Astro-Build · FTP",
-    description:
-      "Baut die statische Seite und lädt sie per FTP oder GitHub Action zu All-Inkl hoch.",
-    phase: "MVP",
-    section: "hosting",
-  },
-  {
-    id: "llm",
-    layer: "KI-Anbieter",
-    title: "Claude Haiku (API)",
-    tech: "Anthropic API · Pay-per-Use",
-    description:
-      "Kleines, günstiges Modell für zwei Aufgaben: Extraktion (nachts) und Zusammenfassung (bei der Suche). Ausgabelimit ist gesetzt.",
-    phase: "MVP",
-    section: "ki",
-  },
-  {
-    id: "db",
-    layer: "Supabase (Frankfurt)",
-    title: "Datenbank",
-    tech: "Postgres · Free Tier",
-    description:
-      "Angebote mit Quelle und Zeitstempel, Hashes, Altersbereich- und Ortsabfragen. Später PostGIS für Umkreissuche. Liefert beim Build auch die Daten für ICS-Dateien.",
-    phase: "MVP",
-    section: "techstack",
-  },
-  {
-    id: "edge",
-    layer: "Supabase (Frankfurt)",
-    title: "Edge Function",
-    tech: "TypeScript · Rate-Limit",
-    description:
-      "Nimmt Alter und Ort entgegen, fragt die DB, ruft die KI und gibt die Zusammenfassung zurück. Der API-Key bleibt serverseitig.",
-    phase: "MVP",
-    section: "hosting",
-  },
-  {
-    id: "site",
-    layer: "Website",
-    title: "Astro-Frontend",
-    tech: "Astro (statisch) · All-Inkl",
-    description:
-      "Eingabe von Alter und Ort, danach Zusammenfassung und Angebote, jeweils mit Quelle, Aktualisierungsdatum und „Angaben ohne Gewähr“.",
-    phase: "MVP",
-    section: "mvp",
-  },
-  {
-    id: "ics",
-    layer: "Website",
-    title: "ICS-Kalenderexport",
-    tech: "beim Astro-Build",
-    description:
-      "Pro Angebot eine ICS-Datei, dazu Google-Kalender-Link. Stabile Angebots-ID als UID, regelmäßige Kurse als RRULE.",
-    phase: "nach MVP",
-    section: "nachMvp",
-  },
-  {
     id: "user",
-    layer: "Nutzer",
+    layer: "Personen",
+    kind: "Person",
     title: "Eltern",
     tech: "Browser",
     description: "Geben Alter des Kindes und Wohnort ein. Keine Registrierung im MVP.",
@@ -155,45 +50,168 @@ export const archNodes: ArchNode[] = [
     section: "mvp",
   },
   {
-    id: "mail",
-    layer: "Mail (nach MVP)",
-    title: "Mail & Newsletter",
-    tech: "z. B. Brevo · Double-Opt-in",
+    id: "src",
+    layer: "Externe Systeme",
+    kind: "Externes System",
+    title: "Geprüfte Quellen",
+    tech: "Websites, PDFs",
     description:
-      "Optionale Anmeldung, Rhythmus wählbar. Nutzt dieselbe Zusammenfassungslogik. AV-Verträge werden ab hier Pflicht.",
+      "Nur manuell geprüfte Seiten von Vereinen, Kommunen und Trägern (robots.txt und Nutzungsbedingungen vorab geprüft).",
+    phase: "MVP",
+    section: "quellen",
+  },
+  {
+    id: "llm",
+    layer: "Externe Systeme",
+    kind: "Externes System",
+    title: "Claude Haiku",
+    tech: "Anthropic API, Pay-per-Use",
+    description:
+      "Kleines, günstiges Modell für zwei Aufgaben: Extraktion (nachts) und Zusammenfassung (bei der Suche). Ausgabelimit gesetzt.",
+    phase: "MVP",
+    section: "ki",
+  },
+  {
+    id: "mail",
+    layer: "Externe Systeme",
+    kind: "Externes System",
+    title: "Mail-Dienst",
+    tech: "z. B. Brevo",
+    description:
+      "Versendet Double-Opt-in und Newsletter. AV-Vertrag wird ab hier Pflicht.",
     phase: "nach MVP",
     section: "nachMvp",
   },
+  {
+    id: "site",
+    layer: "Familien-Angebote-Finder (System)",
+    kind: "Container",
+    title: "Astro-Frontend",
+    tech: "Astro, statisch, All-Inkl",
+    description:
+      "Eingabe von Alter und Ort, Anzeige von Zusammenfassung und Angeboten mit Quelle, Datum und „Angaben ohne Gewähr“. Build per GitHub Action, Upload per FTP zu All-Inkl. Später mit ICS-Dateien.",
+    phase: "MVP",
+    section: "mvp",
+  },
+  {
+    id: "edge",
+    layer: "Familien-Angebote-Finder (System)",
+    kind: "Container",
+    title: "Edge Function",
+    tech: "TypeScript, Supabase",
+    description:
+      "Prüft Eingabe und Rate-Limit, fragt die DB, ruft die KI und liefert die Zusammenfassung. Der API-Key bleibt serverseitig.",
+    phase: "MVP",
+    section: "hosting",
+  },
+  {
+    id: "db",
+    layer: "Familien-Angebote-Finder (System)",
+    kind: "Container",
+    title: "Datenbank",
+    tech: "Postgres, Supabase Frankfurt",
+    description:
+      "Angebote mit Quelle und Zeitstempel sowie Seiten-Hashes. Abfragen nach Altersbereich und Ort, später PostGIS.",
+    phase: "MVP",
+    section: "techstack",
+  },
+  {
+    id: "pipeline",
+    layer: "Familien-Angebote-Finder (System)",
+    kind: "Container",
+    title: "Nächtliche Pipeline",
+    tech: "Python, Crawl4AI, GitHub Actions",
+    description:
+      "Ruft die Quellen ab, prüft per Hash auf Änderungen, extrahiert per KI und speichert. Ablauf siehe Tab „Pipeline“.",
+    phase: "MVP",
+    section: "architektur",
+  },
 ];
 
-/** Spalte von links nach rechts (so lesen sich beide Abläufe in einer Richtung) */
-export const columns: Record<string, number> = {
-  user: 0,
-  src: 0,
-  crawl: 1,
-  hash: 1,
-  extract: 1,
-  deploy: 1,
-  site: 1,
-  ics: 1,
-  edge: 2,
-  db: 2,
-  llm: 3,
-  mail: 3,
-};
-
+/** Beschriftung nach C4: Beschreibung [Protokoll] */
 export const archEdges: ArchEdge[] = [
-  { from: "src", to: "crawl", label: "Abruf", kind: "nightly" },
-  { from: "crawl", to: "hash", label: "Seitentext", kind: "nightly" },
-  { from: "hash", to: "extract", label: "nur Geändertes", kind: "nightly" },
-  { from: "extract", to: "llm", label: "Text → Schema", kind: "nightly" },
-  { from: "extract", to: "db", label: "Datensätze", kind: "nightly" },
-  { from: "user", to: "site", label: "Alter + Ort", kind: "request" },
-  { from: "site", to: "edge", label: "POST", kind: "request" },
-  { from: "edge", to: "db", label: "Abfrage", kind: "request" },
-  { from: "edge", to: "llm", label: "Zusammenfassung", kind: "request" },
-  { from: "deploy", to: "site", label: "Upload", kind: "build" },
-  { from: "db", to: "mail", label: "neue Angebote", kind: "later" },
+  { from: "user", to: "site", label: "Sucht Angebote [HTTPS]", kind: "request" },
+  { from: "site", to: "edge", label: "Fragt an [HTTPS, JSON]", kind: "request" },
+  { from: "edge", to: "db", label: "Liest Angebote [SQL]", kind: "request" },
+  { from: "edge", to: "llm", label: "Lässt zusammenfassen [HTTPS]", kind: "request" },
+  { from: "pipeline", to: "src", label: "Ruft Seiten ab [HTTPS]", kind: "nightly" },
+  { from: "pipeline", to: "llm", label: "Extrahiert Daten [HTTPS]", kind: "nightly" },
+  { from: "pipeline", to: "db", label: "Speichert Angebote [SQL]", kind: "nightly" },
+  { from: "edge", to: "mail", label: "Versand, Double-Opt-in [API]", kind: "later" },
+];
+
+/* ───────────── Ablauf: Suche (Sequenzdiagramm) ───────────── */
+
+export const seqParticipants = [
+  { id: "user", label: "Eltern", sub: "Browser" },
+  { id: "site", label: "Astro-Frontend", sub: "statisch" },
+  { id: "edge", label: "Edge Function", sub: "Supabase" },
+  { id: "db", label: "Datenbank", sub: "Postgres" },
+  { id: "llm", label: "Claude Haiku", sub: "Anthropic API" },
+];
+
+export interface SeqMessage {
+  from: string;
+  to: string;
+  label: string;
+  note?: string;
+  reply?: boolean;
+}
+
+export const seqMessages: SeqMessage[] = [
+  { from: "user", to: "site", label: "Alter + Ort eingeben" },
+  { from: "site", to: "edge", label: "POST /suche", note: "{ alter, ort }" },
+  { from: "edge", to: "edge", label: "Prüfen", note: "Eingabe, Rate-Limit pro IP" },
+  { from: "edge", to: "db", label: "Angebote abfragen", note: "Alter von/bis, Ort, nicht abgelaufen" },
+  { from: "db", to: "edge", label: "Datensätze + Quelle", reply: true },
+  { from: "edge", to: "llm", label: "Zusammenfassen", note: "nur diese Datensätze" },
+  { from: "llm", to: "edge", label: "Kurztext für Eltern", reply: true },
+  { from: "edge", to: "site", label: "Text + Angebote", note: "Cache pro Alter+Ort ca. 1 Tag", reply: true },
+  { from: "site", to: "user", label: "Anzeige", note: "mit Quelle, „Angaben ohne Gewähr“", reply: true },
+];
+
+/* ───────────── Ablauf: nächtliche Pipeline ───────────── */
+
+export interface PipelineStep {
+  title: string;
+  tech: string;
+  input: string;
+  output: string;
+  branch?: string;
+}
+
+export const pipelineSteps: PipelineStep[] = [
+  {
+    title: "Abrufen",
+    tech: "Crawl4AI, nächtlicher Cronjob",
+    input: "Liste der geprüften Quell-URLs",
+    output: "Sauberer Text pro Seite (PDFs: zuerst Text extrahieren)",
+  },
+  {
+    title: "Änderung prüfen",
+    tech: "Hash pro Seite",
+    input: "Text und gespeicherter Hash",
+    output: "Seite neu oder geändert",
+    branch: "Unverändert: Ende, kein KI-Aufruf (spart Kosten)",
+  },
+  {
+    title: "Extrahieren",
+    tech: "Claude Haiku, Structured Output",
+    input: "Text der neuen oder geänderten Seite",
+    output: "Datensatz nach Schema (Alter, Ort, Termin mit Zeitzone, Kosten …)",
+  },
+  {
+    title: "Speichern",
+    tech: "Supabase Postgres",
+    input: "Datensatz",
+    output: "Angebot mit stabiler ID, Quelle und Zeitstempel; neuer Hash",
+  },
+  {
+    title: "Aufräumen",
+    tech: "SQL, nächtlich",
+    input: "Bestehende Angebote",
+    output: "Abgelaufene Termine ausgeblendet oder gelöscht",
+  },
 ];
 
 /* ───────────── Detailabschnitte unter dem Diagramm ───────────── */
